@@ -1,13 +1,36 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          setConnectionStatus('error');
+          setErrorMessage(error.message);
+        } else {
+          setConnectionStatus('connected');
+        }
+      } catch (err) {
+        setConnectionStatus('error');
+        setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+      }
+    }
+    checkConnection();
+  }, []);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -20,6 +43,24 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
+      </ThemedView>
+      <ThemedView style={[styles.stepContainer, styles.connectionContainer]}>
+        <ThemedText type="subtitle">Supabase Connection</ThemedText>
+        <ThemedView style={styles.statusRow}>
+          <ThemedText>Status:</ThemedText>
+          {connectionStatus === 'checking' && (
+            <ThemedText style={[styles.statusText, styles.checking]}>Checking...</ThemedText>
+          )}
+          {connectionStatus === 'connected' && (
+            <ThemedText style={[styles.statusText, styles.connected]}>Connected</ThemedText>
+          )}
+          {connectionStatus === 'error' && (
+            <ThemedText style={[styles.statusText, styles.error]}>Failed</ThemedText>
+          )}
+        </ThemedView>
+        {errorMessage && (
+          <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+        )}
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
@@ -94,5 +135,31 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  connectionContainer: {
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusText: {
+    fontWeight: 'bold',
+  },
+  checking: {
+    color: '#666',
+  },
+  connected: {
+    color: '#4CAF50',
+  },
+  error: {
+    color: '#f44336',
+  },
+  errorText: {
+    color: '#f44336',
+    fontSize: 12,
   },
 });
