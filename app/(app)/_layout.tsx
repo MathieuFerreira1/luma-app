@@ -1,6 +1,7 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useAuth } from '@/app/hooks/use-auth';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { AppTabs } from '@/app/navigation/app-tabs';
 
 export default function AppLayout() {
   const { isAuthenticated, initialized } = useAuth();
@@ -19,11 +20,8 @@ export default function AppLayout() {
     return <Redirect href="/login" />;
   }
 
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
-  );
+  // Render AppTabs when authenticated
+  return <AppTabs />;
 }
 
 const styles = StyleSheet.create({
